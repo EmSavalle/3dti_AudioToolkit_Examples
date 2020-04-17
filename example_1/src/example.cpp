@@ -22,23 +22,80 @@
 */
 
 #include "example.h"
-
+#include <random>
+#include "AudioFile.h"
+#include <iomanip>
 #define SAMPLERATE 44100
 int iBufferSize;
 bool bEnableReverb;
-int main()
+int main() {
+    moustique = Moustique(true);
+    //moustique.setFile("Wasp-sound.wav");
+    moustique.setFile("WaspWorking.wav");
+
+    initAudio();
+    // Informing user by the console to press any key to end the execution
+    /*cout << "Press ENTER to finish... \n";
+    cin.ignore();
+    getchar();*/
+    string lastOutput="";
+    while (!moustique.isEnded()) {
+        CVector3 pos = moustique.getPosition();
+        string output = "Position moustique : ";
+        if (pos.y < 0) {
+            std::stringstream stream;
+            stream << std::fixed << std::setprecision(1) << -pos.y;
+            std::string s = stream.str();
+            output.append("Droite : " + s + " ");
+        }
+        else {
+            std::stringstream stream;
+            stream << std::fixed << std::setprecision(1) << pos.y;
+            std::string s = stream.str();
+            output.append("Gauche : " +s + " ");
+        }
+        if (pos.x < 0) {
+            std::stringstream stream;
+            stream << std::fixed << std::setprecision(1) << -pos.x;
+            std::string s = stream.str();
+            output.append("Derriere : " + s + " ");
+        }
+        else {
+            std::stringstream stream;
+            stream << std::fixed << std::setprecision(1) << pos.x;
+            std::string s = stream.str();
+            output.append("Devant : " + s + " ");
+        }
+        if (output != lastOutput) {
+            cout << output << endl;
+            lastOutput = output;
+        }
+        
+    }
+
+
+    // Stopping and closing the stream
+    audio->stopStream();
+    audio->closeStream();
+
+
+    return 0;
+}
+void initAudio()
 {
     //Input buffer size and reverb enable
-    cout << "Insert wished buffer size (256, 512, 1024, 2048, 4096...)\n(2048 at least recommended for linux)\t: ";
-    cin >> iBufferSize; cin.ignore();
+    /*cout << "Insert wished buffer size (256, 512, 1024, 2048, 4096...)\n(2048 at least recommended for linux)\t: ";
+    cin >> iBufferSize; cin.ignore();*/
+    iBufferSize = 2048;
 
     char cInput;
-    do{  	cout << "\nDo you want reverb? (Y/n) : "; cInput=getchar();
+    /*do{  	cout << "\nDo you want reverb? (Y/n) : "; cInput=getchar();
     }while(cInput != 'y' && cInput != 'n' && cInput != '\n');
 
     if(cInput=='y' || cInput == '\n') bEnableReverb = true;
     else                              bEnableReverb = false;
-
+    */
+    bEnableReverb = true;
     // Core setup
     Common::TAudioStateStruct audioState;	    // Audio State struct declaration
     audioState.bufferSize = iBufferSize;			// Setting buffer size and sample rate
@@ -55,16 +112,13 @@ int main()
     listener = myCore.CreateListener();								 // First step is creating listener
     Common::CTransform listenerPosition = Common::CTransform();		 // Setting listener in (0,0,0)
     listenerPosition.SetPosition(Common::CVector3(0, 0, 0));
+    
     listener->SetListenerTransform(listenerPosition);
     listener->DisableCustomizedITD();								 // Disabling custom head radius
 
-	   /* HRTF can be loaded in either SOFA (more info in https://sofacoustics.org/) or 3dti-hrtf format.
-	      These HRTF files are provided with 3DTI Audio Toolkit. They can be found in 3dti_AudioToolkit/resources/HRTF */
-	   HRTF::CreateFrom3dti("hrtf.3dti-hrtf", listener);			 // Comment this line and uncomment next lines to load the default HRTF in SOFA format instead of in 3dti-hrtf format
-    /*
-    bool bSpecifiedDelays;
-    HRTF::CreateFromSofa("hrtf.sofa", listener, bSpecifiedDelays);
-    */
+	
+    HRTF::CreateFromSofa("hrtf.sofa", listener);
+    
 
     // Environment setup
     	environment = myCore.CreateEnvironment();									// Creating environment to have reverberated sound
@@ -72,28 +126,20 @@ int main()
       BRIR::CreateFromSofa("brir.sofa", environment);								// Loading SOFAcoustics BRIR file and applying it to the environment
 
 
+      std::cout << "Load sounds\n";
     // Speech source setup
-    sourceSpeech = myCore.CreateSingleSourceDSP();										 // Creating audio source
-    LoadWav(samplesVectorSpeech, "speech.wav");											 // Loading .wav file
-    Common::CTransform sourceSpeechPosition = Common::CTransform();
-    sourceSpeechPosition.SetPosition(Common::CVector3(0, 2, 0));						 // Setting source in x=0,y=2,z=0 (on the left)
-    sourceSpeech->SetSourceTransform(sourceSpeechPosition);
-    sourceSpeech->SetSpatializationMode(Binaural::TSpatializationMode::HighQuality);	//HighPerformance vs HighQuality // Choosing high quality mode for anechoic processing
-    sourceSpeech->DisableNearFieldEffect();												 // Audio source will not be close to listener, so we don't need near field effect
-    sourceSpeech->EnableAnechoicProcess();												 // Setting anechoic and reverb processing for this source
-    sourceSpeech->EnableDistanceAttenuationAnechoic();
-
-    // Steps source setup
-    sourceSteps = myCore.CreateSingleSourceDSP();										 // Creating audio source
-    LoadWav(samplesVectorSteps, "steps.wav");											   // Loading .wav file
-    Common::CTransform sourceStepsPosition = Common::CTransform();
-    sourceStepsPosition.SetPosition(Common::CVector3(-3, 10, -10));						 // Setting source in (-3,-10,-10)
-    sourceSteps->SetSourceTransform(sourceStepsPosition);
-    sourceSteps->SetSpatializationMode(Binaural::TSpatializationMode::HighQuality);		 // Choosing high quality mode for anechoic processing
-    sourceSteps->DisableNearFieldEffect();												 // Audio source will not be close to listener, so we don't need near field effect
-    sourceSteps->EnableAnechoicProcess();												   // Setting anechoic and reverb processing for this source
-    sourceSteps->EnableDistanceAttenuationAnechoic();
-    sourcePosition = sourceStepsPosition;												 // Saving initial position into source position to move the steps audio source later on
+    source = myCore.CreateSingleSourceDSP();										 // Creating audio source
+    //AudioLoader(samplesVector, moustique.getFile());
+    LoadWav(samplesVector, moustique.getFile());
+    std::cout << "Loaded sounds\n";										 // Loading .wav file
+    Common::CTransform sourcePosition = Common::CTransform();
+    sourcePosition.SetPosition(moustique.getPosition());				 // Setting source in x=0,y=2,z=0 (on the left)
+    source->SetSourceTransform(sourcePosition);
+    source->SetSpatializationMode(Binaural::TSpatializationMode::HighQuality);	//HighPerformance vs HighQuality // Choosing high quality mode for anechoic processing
+    source->DisableNearFieldEffect();												 // Audio source will not be close to listener, so we don't need near field effect
+    source->EnableAnechoicProcess();												 // Setting anechoic and reverb processing for this source
+    source->EnableDistanceAttenuationAnechoic();
+											 // Saving initial position into source position to move the steps audio source later on
 
 
     // Declaration and initialization of stereo buffer
@@ -105,19 +151,19 @@ int main()
     audio = std::shared_ptr<RtAudio>(new RtAudio());  // Initialization of RtAudio
                                                       // It uses the first API it founds compiled and requires of preprocessor definitions
                                                       // which depends on the OS used and the audio output device (more info in https://www.music.mcgill.ca/~gary/rtaudio/compiling.html)
-
+    audio->showWarnings(true);
     // Setting the output parameters
     RtAudio::StreamParameters outputParameters;
     outputParameters.nChannels = 2;									 // Setting output as stereo
     outputParameters.deviceId = audio->getDefaultOutputDevice();	 // Choosing default output device
-
+    
     // Setting the audio stream options flags.
-    RtAudio::StreamOptions options;
-    options.flags = RTAUDIO_SCHEDULE_REALTIME;						 // Setting real-time audio output, comment this and uncomment next block to choose the flags of RTAudio.
-    /*char flag;
+    RtAudio::StreamOptions options;						 // Setting real-time audio output, comment this and uncomment next block to choose the flags of RTAudio.
+    
+    char flag = '2';
     do{
-  	    cout << "\nFlags :\t0 - CONTINUE\n\t1 - REALTIME\n\t2 - MINIMIZE_LATENCY\n\t3 - HOG_DEVICE\n";
-  	    cin >> flag;
+  	    //cout << "\nFlags :\t0 - CONTINUE\n\t1 - REALTIME\n\t2 - MINIMIZE_LATENCY\n\t3 - HOG_DEVICE\n";
+  	    //cin >> flag;
   	    if(flag == '1'){
   	    	  options.flags |= RTAUDIO_SCHEDULE_REALTIME;
   	    }else if(flag == '2'){
@@ -125,11 +171,13 @@ int main()
   	    }else if(flag == '3'){
   	    	  options.flags |= RTAUDIO_HOG_DEVICE;
   	    }
-    }while(flag!='0');*/
+    }while(flag=='0');
+    options.flags |= RTAUDIO_MINIMIZE_LATENCY;
     options.numberOfBuffers = 4;                // Setting number of buffers used by RtAudio
     options.priority = 1;                       // Setting stream thread priority
     unsigned int frameSize = iBufferSize;       // Declaring and initializing frame size variable because next statement needs it
 
+    std::cout << "Open stream\n";
     // Opening of audio stream
     try{
 	       audio->openStream(&outputParameters,     // Specified output parameters
@@ -141,6 +189,7 @@ int main()
 		               nullptr,			                  // Unused pointer to get feedback
 		               &options			                  // Stream options (real-time stream, 4 buffers and priority)
 		              );
+           std::cout << "Stream opened";
      }catch ( RtAudioError& e ) {
     	    std::cout << "\nERROR:\t" << e.getMessage() << '\n' << std::endl;
     	    exit( 0 );
@@ -148,23 +197,16 @@ int main()
 
     // Starting the stream
     audio->startStream();
-
-    // Informing user by the console to press any key to end the execution
-    cout << "Press ENTER to finish... \n";
-    cin.ignore();
-    getchar();
-
-
-    // Stopping and closing the stream
-    audio->stopStream();
-    audio->closeStream();
-
-
-    return 0;
 }
 
 static int rtAudioCallback(void *outputBuffer, void *inputBuffer, unsigned int uiBufferSize, double streamTime, RtAudioStreamStatus status, void *data)
 {
+    // Loading .wav file
+    Common::CTransform sourcePosition = Common::CTransform();
+    CVector3 vec = moustique.accessPosition();
+
+    sourcePosition.SetPosition(vec);
+    source->SetSourceTransform(sourcePosition);
     // Setting the output buffer as float
     float * floatOutputBuffer = (float *)outputBuffer;
 
@@ -182,7 +224,6 @@ static int rtAudioCallback(void *outputBuffer, void *inputBuffer, unsigned int u
     // Declaration and initialization of interlaced audio vector for correct stereo output
     CStereoBuffer<float> iOutput;
     iOutput.Interlace(outputBufferStereo.left, outputBufferStereo.right);
-
     // Buffer filling loop
     for (auto it = iOutput.begin(); it != iOutput.end(); it++)
     {
@@ -190,39 +231,27 @@ static int rtAudioCallback(void *outputBuffer, void *inputBuffer, unsigned int u
         floatOutputBuffer = &floatOutputBuffer[1];				 // Updating pointer to next buffer position
     }
 
-    // Moving the steps source
-    sourcePosition.SetPosition(Common::CVector3(sourcePosition.GetPosition().x,
-                                                sourcePosition.GetPosition().y - streamTime / 110.0f,
-                                                sourcePosition.GetPosition().z > 10 ? sourcePosition.GetPosition().z : sourcePosition.GetPosition().z + streamTime / 110.0f));
-    sourceSteps->SetSourceTransform(sourcePosition);
     return 0;
 }
 
 void audioProcess(Common::CEarPair<CMonoBuffer<float>> & bufferOutput, int uiBufferSize)
 {
     // Declaration, initialization and filling mono buffers
-    CMonoBuffer<float> speechInput(uiBufferSize);	FillBuffer(speechInput, wavSamplePositionSpeech, positionEndFrameSpeech, samplesVectorSpeech);
-    CMonoBuffer<float> stepsInput (uiBufferSize);	FillBuffer(stepsInput,  wavSamplePositionSteps,  positionEndFrameSteps,  samplesVectorSteps );
+    CMonoBuffer<float> input(uiBufferSize);	FillBuffer(input, wavSamplePosition, positionEndFrame, samplesVector);
 
     // Declaration of stereo buffer
     Common::CEarPair<CMonoBuffer<float>> bufferProcessed;
 
-    // Anechoic process of speech source
-    sourceSpeech->SetBuffer(speechInput);
-    sourceSpeech->ProcessAnechoic(bufferProcessed.left, bufferProcessed.right);
+    // Anechoic process of  source
+    source->SetBuffer(input);
+    source->ProcessAnechoic(bufferProcessed.left, bufferProcessed.right);
 
-    // Adding anechoic processed speech source to the output mix
+    // Adding anechoic processed  source to the output mix
 
     bufferOutput.left += bufferProcessed.left;
     bufferOutput.right += bufferProcessed.right;
 
-    // Anechoic process of steps source
-    sourceSteps->SetBuffer(stepsInput);
-    sourceSteps->ProcessAnechoic(bufferProcessed.left, bufferProcessed.right);
 
-    // Adding anechoic processed steps source to the output mix
-    bufferOutput.left += bufferProcessed.left;
-    bufferOutput.right += bufferProcessed.right;
 
     // Declaration and initialization of separate buffer needed for the reverb
     Common::CEarPair<CMonoBuffer<float>> bufferReverb;
@@ -279,4 +308,17 @@ void LoadWav(std::vector<float>& samplesVector, const char* stringIn)
 
     for (int i = 0; i < samplesCount; i++)
         samplesVector.push_back((float)sample[i] / (float)INT16_MAX);				 // Converting samples to float to push them in samples vector
+}
+
+void AudioLoader(std::vector<float>& samplesVector, const char* stringIn) {
+    AudioFile<float> audioFile;
+    audioFile.load(stringIn);
+
+    int channel = 0;
+    int numSamples = audioFile.getNumSamplesPerChannel();
+
+    for (int i = 0; i < numSamples; i++)
+    {
+        samplesVector.push_back(audioFile.samples[channel][i]);
+    }
 }

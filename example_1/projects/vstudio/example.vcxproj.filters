@@ -15,16 +15,53 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="ReadMe.txt" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="example.cpp">
+    <ClCompile Include="..\..\src\example.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Moustique.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="example.h">
-      <Filter>Source Files</Filter>
+    <ClInclude Include="..\..\src\example.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Moustique.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\resources\brir.sofa" />
+    <None Include="..\..\resources\hrtf.3dti-hrtf" />
+    <None Include="..\..\resources\hrtf.sofa" />
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="MOSQUIT1.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="moustique.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="speech.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="steps.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="test.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="Wasp-sound.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
+    <Media Include="WAV125.wav">
+      <Filter>Resource Files</Filter>
+    </Media>
   </ItemGroup>
 </Project>

@@ -30,26 +30,29 @@
 #include <BRIR/BRIRCereal.h>
 #include <BinauralSpatializer/3DTI_BinauralSpatializer.h>
 #include <RtAudio.h>
+#include "../projects/vstudio/Moustique.h"
+
+Moustique								moustique = NONE;
 
 
 shared_ptr<RtAudio>						audio;												 // Pointer to RtAudio API
 
 Binaural::CCore							myCore;												 // Core interface
 shared_ptr<Binaural::CListener>			listener;											 // Pointer to listener interface
-shared_ptr<Binaural::CSingleSourceDSP>	sourceSpeech, sourceSteps;							 // Pointers to each audio source interface
+shared_ptr<Binaural::CSingleSourceDSP>	source;							 // Pointers to each audio source interface
 shared_ptr<Binaural::CEnvironment>		environment;										 // Pointer to environment interface
 
 Common::CTransform						sourcePosition;										 // Storages the position of the steps source
 
 Common::CEarPair<CMonoBuffer<float>>	outputBufferStereo;									 // Stereo buffer containing processed audio
 
-vector<float>							samplesVectorSpeech, samplesVectorSteps;			 // Storages the audio from the wav files
+vector<float>							samplesVector;			 // Storages the audio from the wav files
 
-unsigned int							wavSamplePositionSpeech, positionEndFrameSpeech,	 // Storages, respectively, the starting and ending position of the frame being rendered for each source
-                                        wavSamplePositionSteps,  positionEndFrameSteps ;
+unsigned int							wavSamplePosition, positionEndFrame;	 // Storages, respectively, the starting and ending position of the frame being rendered for each source
+double x, y, z;
+int yMod, zMod;
 
-
-
+void initAudio();
 /** \brief This method gathers all audio processing (spatialization and reverberation)
 *	\param [out] bufferOutput output buffer processed
 *	\param [in] bufferSize size of buffer in samples
@@ -81,4 +84,6 @@ void LoadWav(std::vector<float>& samplesVector, const char* stringIn);
 */
 static int rtAudioCallback(void *outputBuffer, void *inputBuffer, unsigned int bufferSize, double streamTime, RtAudioStreamStatus status, void *data);
 
+
+void AudioLoader(std::vector<float>& samplesVector, const char* stringIn);
 #endif
